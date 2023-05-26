@@ -1,5 +1,5 @@
 /*
-See LICENSE folder for this sample’s licensing information.
+See the LICENSE.txt file for this sample’s licensing information.
 
 Abstract:
 Sales Details definitions.
@@ -9,28 +9,31 @@ import Charts
 import SwiftUI
 
 struct DailySalesChart: View {
-    let showAverageLine: Bool
+    @Binding var scrollPosition: TimeInterval
 
     var body: some View {
         Chart {
-            ForEach(SalesData.last30Days, id: \.day) {
+            ForEach(SalesData.last365Days, id: \.day) {
                 BarMark(
                     x: .value("Day", $0.day, unit: .day),
                     y: .value("Sales", $0.sales)
                 )
             }
-            .foregroundStyle(showAverageLine ? .gray.opacity(0.3) : .blue)
+            .foregroundStyle(.blue)
+        }
+        .chartScrollableAxes(.horizontal)
+        .chartXVisibleDomain(length: 3600 * 24 * 30)
+        .chartScrollTargetBehavior(
+            .valueAligned(
+                matching: .init(hour: 0),
+                majorAlignment: .matching(.init(day: 1))))
+        .chartScrollPosition(x: $scrollPosition)
 
-            if showAverageLine {
-                RuleMark(
-                    y: .value("Average", SalesData.last30DaysAverage)
-                )
-                .lineStyle(StrokeStyle(lineWidth: 3))
-                .annotation(position: .top, alignment: .leading) {
-                    Text("Average: \(SalesData.last30DaysAverage, format: .number)")
-                        .font(.body.bold())
-                        .foregroundStyle(.blue)
-                }
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .day, count: 7)) {
+                AxisTick()
+                AxisGridLine()
+                AxisValueLabel(format: .dateTime.month().day())
             }
         }
     }
@@ -56,8 +59,25 @@ struct MonthlySalesChart: View {
 
 struct SalesDetails: View {
     @State private var timeRange: TimeRange = .last30Days
-    @State private var showAverageLine: Bool = false
+    @State var scrollPositionTimeInterval: TimeInterval =
+        SalesData.last365Days.last!.day.addingTimeInterval(-1 * 3600 * 24 * 30).timeIntervalSinceReferenceDate
 
+    var scrollPositionStart: Date {
+        Date(timeIntervalSinceReferenceDate: scrollPositionTimeInterval)
+    }
+    
+    var scrollPositionEnd: Date {
+        scrollPositionStart.addingTimeInterval(3600 * 24 * 30)
+    }
+    
+    var scrollPositionString: String {
+        scrollPositionStart.formatted(.dateTime.month().day())
+    }
+    
+    var scrollPositionEndString: String {
+        scrollPositionEnd.formatted(.dateTime.month().day().year())
+    }
+                                 
     var body: some View {
         List {
             VStack(alignment: .leading) {
@@ -70,11 +90,15 @@ struct SalesDetails: View {
 
                 switch timeRange {
                 case .last30Days:
-                    Text("\(SalesData.last30DaysTotal, format: .number) Pancakes")
+                    Text("\(SalesData.salesInPeriod(in: scrollPositionStart...scrollPositionEnd), format: .number) Pancakes")
                         .font(.title2.bold())
                         .foregroundColor(.primary)
+                    
+                    Text("\(scrollPositionString) – \(scrollPositionEndString)")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
 
-                    DailySalesChart(showAverageLine: showAverageLine)
+                    DailySalesChart(scrollPosition: $scrollPositionTimeInterval)
                         .frame(height: 240)
                 case .last12Months:
                     Text("\(SalesData.last12MonthsTotal, format: .number) Pancakes")
@@ -86,24 +110,24 @@ struct SalesDetails: View {
                 }
             }
             .listRowSeparator(.hidden)
+            .transaction {
+                $0.animation = nil // Do not animate between different sets of bars.
+            }
 
-            Section("Options") {
-                if timeRange == .last30Days {
-                    Toggle("Show Daily Average", isOn: $showAverageLine)
-                }
+            Section("More info") {
                 TransactionsLink()
             }
         }
         .listStyle(.plain)
+        #if !os(macOS)
         .navigationBarTitle("Total Sales", displayMode: .inline)
+        #endif
         .navigationDestination(for: [Transaction].self) { transactions in
             TransactionsView(transactions: transactions)
         }
     }
 }
 
-struct SalesDetails_Previews: PreviewProvider {
-    static var previews: some View {
-        SalesDetails()
-    }
+#Preview {
+    SalesDetails()
 }

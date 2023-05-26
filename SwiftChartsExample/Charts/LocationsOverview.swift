@@ -1,5 +1,5 @@
 /*
-See LICENSE folder for this sample’s licensing information.
+See the LICENSE.txt file for this sample’s licensing information.
 
 Abstract:
 Locations Overview definitions.
@@ -15,9 +15,9 @@ struct LocationsOverviewChart: View {
     var body: some View {
         Chart {
             ForEach(LocationData.last30Days) { series in
-                ForEach(series.sales, id: \.weekday) { element in
+                ForEach(series.sales, id: \.day) { element in
                     LineMark(
-                        x: .value("Day", element.weekday, unit: .day),
+                        x: .value("Day", element.day, unit: .day),
                         y: .value("Sales", element.sales)
                     )
                 }
@@ -99,10 +99,8 @@ struct Square: ChartSymbolShape, InsettableShape {
     }
 }
 
-struct LocationsOverview_Previews: PreviewProvider {
-    static var previews: some View {
-        LocationsOverview()
-            .padding()
-    }
+#Preview {
+    LocationsOverview()
+        .padding()
 }
 

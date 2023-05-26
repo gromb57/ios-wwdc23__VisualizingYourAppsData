@@ -1,5 +1,5 @@
 /*
-See LICENSE folder for this sample’s licensing information.
+See the LICENSE.txt file for this sample’s licensing information.
 
 Abstract:
 Sales Parameters definitions.
@@ -78,9 +78,15 @@ struct SalesMinMaxAverage: View {
             }
         }
         .listStyle(.plain)
+        #if !os(macOS)
         .navigationBarTitle("Daily Average, Min, Max", displayMode: .inline)
+        #endif
         .navigationDestination(for: [Transaction].self) { transactions in
             TransactionsView(transactions: transactions)
         }
     }
+}
+
+#Preview {
+    SalesMinMaxAverage()
 }

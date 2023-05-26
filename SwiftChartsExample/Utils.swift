@@ -1,5 +1,5 @@
 /*
-See LICENSE folder for this sample’s licensing information.
+See the LICENSE.txt file for this sample’s licensing information.
 
 Abstract:
 Utility views and functions.
@@ -16,7 +16,7 @@ struct TimeRangePicker: View {
     @Binding var value: TimeRange
 
     var body: some View {
-        Picker("Time Range", selection: $value.animation(.easeInOut)) {
+        Picker(selection: $value.animation(.easeInOut), label: EmptyView()) {
             Text("30 Days").tag(TimeRange.last30Days)
             Text("12 Months").tag(TimeRange.last12Months)
         }

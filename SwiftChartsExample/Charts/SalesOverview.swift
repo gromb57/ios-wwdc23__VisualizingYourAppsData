@@ -1,5 +1,5 @@
 /*
-See LICENSE folder for this sample’s licensing information.
+See the LICENSE.txt file for this sample’s licensing information.
 
 Abstract:
 Sales Overview definitions.
@@ -36,9 +36,7 @@ struct SalesOverview: View {
     }
 }
 
-struct SalesOverview_Previews: PreviewProvider {
-    static var previews: some View {
-        SalesOverview()
-            .padding()
-    }
+#Preview {
+    SalesOverview()
+        .padding()
 }

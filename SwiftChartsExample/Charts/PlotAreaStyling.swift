@@ -1,5 +1,5 @@
 /*
-See LICENSE folder for this sample’s licensing information.
+See the LICENSE.txt file for this sample’s licensing information.
 
 Abstract:
 Plot area styling definitions.
@@ -44,6 +44,12 @@ struct ChartWithBackground: View {
             .padding()
         }
         .preferredColorScheme(.dark)
+        #if !os(macOS)
         .navigationBarTitle("Plot Area Styling", displayMode: .inline)
+        #endif
     }
+}
+
+#Preview {
+    ChartWithBackground()
 }

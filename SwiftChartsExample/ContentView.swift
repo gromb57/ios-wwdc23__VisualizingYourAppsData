@@ -1,5 +1,5 @@
 /*
-See LICENSE folder for this sample’s licensing information.
+See the LICENSE.txt file for this sample’s licensing information.
 
 Abstract:
 The main content view of the app.
@@ -11,6 +11,9 @@ struct ContentView: View {
     @State private var selection = 2
 
     var body: some View {
+        #if os(macOS)
+        SalesTab()
+        #else
         TabView(selection: $selection) {
             MenuTab()
                 .tabItem {
@@ -24,6 +27,7 @@ struct ContentView: View {
                 }
                 .tag(2)
         }
+        #endif
     }
 }
 
@@ -46,8 +50,6 @@ struct SalesTab: View {
         case styles
         case locations
         case salesMinMaxAverage
-        case brushing
-        case lollipop
         case background
     }
 
@@ -74,13 +76,13 @@ struct SalesTab: View {
 
                 Section("Additional examples") {
                     NavigationLink("Daily Average, Min, Max", value: Destinations.salesMinMaxAverage)
-                    NavigationLink("Interactive Brushing", value: Destinations.brushing)
-                    NavigationLink("Interactive Lollipop", value: Destinations.lollipop)
                     NavigationLink("Plot Area Styling", value: Destinations.background)
                 }
             }
             .navigationTitle("Sales")
+            #if !os(macOS)
             .listStyle(.insetGrouped)
+            #endif
         } detail: {
             NavigationStack {
                 switch selection ?? .empty {
@@ -89,8 +91,6 @@ struct SalesTab: View {
                 case .styles: StylesDetails()
                 case .locations: LocationsDetails()
                 case .salesMinMaxAverage: SalesMinMaxAverage()
-                case .brushing: InteractiveBrushing()
-                case .lollipop: InteractiveLollipop()
                 case .background: ChartWithBackground()
                 }
             }
@@ -98,8 +98,6 @@ struct SalesTab: View {
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
+#Preview {
+    ContentView()
 }

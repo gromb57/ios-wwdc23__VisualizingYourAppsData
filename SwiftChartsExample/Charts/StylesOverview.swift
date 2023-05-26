@@ -1,5 +1,5 @@
 /*
-See LICENSE folder for this sample’s licensing information.
+See the LICENSE.txt file for this sample’s licensing information.
 
 Abstract:
 Styles Overview definitions.
@@ -10,13 +10,17 @@ import SwiftUI
 
 struct StylesOverviewChart: View {
     var body: some View {
-        Chart(TopStyleData.last12Months, id: \.name) { element in
-            BarMark(
-                x: .value("Sales", element.sales),
-                y: .value("Name", element.name)
+        Chart(TopStyleData.last30Days, id: \.name) { element in
+            SectorMark(
+                angle: .value("Sales", element.sales),
+                innerRadius: .ratio(0.618),
+                angularInset: 1
             )
-            .opacity(element.name == TopStyleData.last30Days.first!.name ? 1 : 0.5)
+            .cornerRadius(3.0)
+            .foregroundStyle(by: .value("Name", element.name))
+            .opacity(element.name == TopStyleData.last30Days.first!.name ? 1 : 0.3)
         }
+        .chartLegend(.hidden)
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
     }
@@ -35,9 +39,7 @@ struct StylesOverview: View {
     }
 }
 
-struct StylesOverview_Previews: PreviewProvider {
-    static var previews: some View {
-        StylesOverview()
-            .padding()
-    }
+#Preview {
+    StylesOverview()
+        .padding()
 }

@@ -1,11 +1,14 @@
 /*
-See LICENSE folder for this sample’s licensing information.
+See the LICENSE.txt file for this sample’s licensing information.
 
 Abstract:
 Sample data.
 */
 
 import SwiftUI
+import GameplayKit
+
+private let gaussianRandoms = GKGaussianDistribution(lowestValue: 0, highestValue: 20)
 
 func date(year: Int, month: Int, day: Int = 1) -> Date {
     Calendar.current.date(from: DateComponents(year: year, month: month, day: day)) ?? Date()
@@ -16,21 +19,21 @@ struct TopStyleData {
     /// Sales by pancake style for the last 30 days, sorted by amount.
     static let last30Days = [
         (name: "Cachapa", sales: 916),
-        (name: "Injera", sales: 850),
-        (name: "Crêpe", sales: 802),
-        (name: "Jian Bing", sales: 753),
-        (name: "Dosa", sales: 654),
-        (name: "American", sales: 618)
+        (name: "Injera", sales: 820),
+        (name: "Crêpe", sales: 610),
+        (name: "Jian Bing", sales: 350),
+        (name: "Dosa", sales: 144),
+        (name: "American", sales: 66)
     ]
 
     /// Sales by pancake style for the last 12 months, sorted by amount.
     static let last12Months = [
         (name: "Cachapa", sales: 9631),
-        (name: "Crêpe", sales: 7959),
+        (name: "Crêpe", sales: 6200),
         (name: "Injera", sales: 7891),
-        (name: "Jian Bing", sales: 7506),
-        (name: "American", sales: 6777),
-        (name: "Dosa", sales: 6325)
+        (name: "Jian Bing", sales: 3300),
+        (name: "American", sales: 700),
+        (name: "Dosa", sales: 1400)
     ]
 }
 
@@ -79,6 +82,48 @@ struct SalesData {
         Double(last30DaysTotal / last30Days.count)
     }
 
+    private static func randomSalesForDay(_ dayNumber: Double) -> Int {
+        // Add noise to the generated data.
+        let yearlySeasonality = 100.0 * (0.5 - 0.5 * cos(2.0 * .pi * (dayNumber / 364.0)))
+        let monthlySeasonality = 10.0 * (0.5 - 0.5 * cos(2.0 * .pi * (dayNumber / 30.0)))
+        let weeklySeasonality = 30.0 * (1 - cos(2.0 * .pi * ((dayNumber + 2.0) / 7.0)))
+        return Int(yearlySeasonality + monthlySeasonality + weeklySeasonality + Double(gaussianRandoms.nextInt()))
+    }
+
+    /// Sales by day for the last 365 days.
+    static let last365Days: [(day: Date, sales: Int)] = stride(from: 0, to: 200, by: 1).compactMap {
+        let startDay: Date = date(year: 2022, month: 11, day: 17)  // 200 days before WWDC
+        let day: Date = Calendar.current.date(byAdding: .day, value: $0, to: startDay)!
+        let dayNumber = Double($0)
+        
+        var sales = randomSalesForDay(dayNumber)
+        let dayOfWeek = Calendar.current.component(.weekday, from: day)
+        if dayOfWeek == 6 {
+            sales += gaussianRandoms.nextInt() * 3
+        } else if dayOfWeek == 7 {
+            sales += gaussianRandoms.nextInt()
+        } else {
+            sales = Int(Double(sales) * Double.random(in: 4...5) / Double.random(in: 5...6))
+        }
+        return (
+            day: day,
+            sales: sales
+        )
+    }
+    
+    static func salesInPeriod(in range: ClosedRange<Date>) -> Int {
+        SalesData.last365Days.filter { range.contains($0.day) }.reduce(0) { $0 + $1.sales }
+    }
+    
+    /// Total sales for the last 365 days.
+    static var last365DaysTotal: Int {
+        last365Days.map { $0.sales }.reduce(0, +)
+    }
+
+    static var last365DaysAverage: Double {
+        Double(last365DaysTotal / last365DaysTotal)
+    }
+
     /// Sales by month for the last 12 months.
     static let last12Months = [
         (month: date(year: 2021, month: 7), sales: 3952, dailyAverage: 127, dailyMin: 95, dailyMax: 194),
@@ -114,7 +159,7 @@ struct LocationData {
 
         /// Average daily sales for each weekday.
         /// The `weekday` property is a `Date` that represents a weekday.
-        let sales: [(weekday: Date, sales: Int)]
+        let sales: [(day: Date, sales: Int)]
 
         /// The identifier for the series.
         var id: String { city }
@@ -123,23 +168,23 @@ struct LocationData {
     /// Sales by location and weekday for the last 30 days.
     static let last30Days: [Series] = [
         .init(city: "Cupertino", sales: [
-            (weekday: date(year: 2022, month: 5, day: 2), sales: 54),
-            (weekday: date(year: 2022, month: 5, day: 3), sales: 42),
-            (weekday: date(year: 2022, month: 5, day: 4), sales: 88),
-            (weekday: date(year: 2022, month: 5, day: 5), sales: 49),
-            (weekday: date(year: 2022, month: 5, day: 6), sales: 42),
-            (weekday: date(year: 2022, month: 5, day: 7), sales: 125),
-            (weekday: date(year: 2022, month: 5, day: 8), sales: 67)
+            (day: date(year: 2022, month: 5, day: 2), sales: 54),
+            (day: date(year: 2022, month: 5, day: 3), sales: 42),
+            (day: date(year: 2022, month: 5, day: 4), sales: 88),
+            (day: date(year: 2022, month: 5, day: 5), sales: 49),
+            (day: date(year: 2022, month: 5, day: 6), sales: 42),
+            (day: date(year: 2022, month: 5, day: 7), sales: 125),
+            (day: date(year: 2022, month: 5, day: 8), sales: 67)
 
         ]),
         .init(city: "San Francisco", sales: [
-            (weekday: date(year: 2022, month: 5, day: 2), sales: 81),
-            (weekday: date(year: 2022, month: 5, day: 3), sales: 90),
-            (weekday: date(year: 2022, month: 5, day: 4), sales: 52),
-            (weekday: date(year: 2022, month: 5, day: 5), sales: 72),
-            (weekday: date(year: 2022, month: 5, day: 6), sales: 84),
-            (weekday: date(year: 2022, month: 5, day: 7), sales: 84),
-            (weekday: date(year: 2022, month: 5, day: 8), sales: 137)
+            (day: date(year: 2022, month: 5, day: 2), sales: 81),
+            (day: date(year: 2022, month: 5, day: 3), sales: 90),
+            (day: date(year: 2022, month: 5, day: 4), sales: 52),
+            (day: date(year: 2022, month: 5, day: 5), sales: 72),
+            (day: date(year: 2022, month: 5, day: 6), sales: 84),
+            (day: date(year: 2022, month: 5, day: 7), sales: 84),
+            (day: date(year: 2022, month: 5, day: 8), sales: 137)
         ])
     ]
 
@@ -160,22 +205,22 @@ struct LocationData {
     /// Sales by location and weekday for the last 12 months.
     static let last12Months: [Series] = [
         .init(city: "Cupertino", sales: [
-            (weekday: date(year: 2022, month: 5, day: 2), sales: 64),
-            (weekday: date(year: 2022, month: 5, day: 3), sales: 60),
-            (weekday: date(year: 2022, month: 5, day: 4), sales: 47),
-            (weekday: date(year: 2022, month: 5, day: 5), sales: 55),
-            (weekday: date(year: 2022, month: 5, day: 6), sales: 55),
-            (weekday: date(year: 2022, month: 5, day: 7), sales: 105),
-            (weekday: date(year: 2022, month: 5, day: 8), sales: 67)
+            (day: date(year: 2022, month: 5, day: 2), sales: 64),
+            (day: date(year: 2022, month: 5, day: 3), sales: 60),
+            (day: date(year: 2022, month: 5, day: 4), sales: 47),
+            (day: date(year: 2022, month: 5, day: 5), sales: 55),
+            (day: date(year: 2022, month: 5, day: 6), sales: 55),
+            (day: date(year: 2022, month: 5, day: 7), sales: 105),
+            (day: date(year: 2022, month: 5, day: 8), sales: 67)
         ]),
         .init(city: "San Francisco", sales: [
-            (weekday: date(year: 2022, month: 5, day: 2), sales: 57),
-            (weekday: date(year: 2022, month: 5, day: 3), sales: 56),
-            (weekday: date(year: 2022, month: 5, day: 4), sales: 66),
-            (weekday: date(year: 2022, month: 5, day: 5), sales: 61),
-            (weekday: date(year: 2022, month: 5, day: 6), sales: 60),
-            (weekday: date(year: 2022, month: 5, day: 7), sales: 77),
-            (weekday: date(year: 2022, month: 5, day: 8), sales: 113)
+            (day: date(year: 2022, month: 5, day: 2), sales: 57),
+            (day: date(year: 2022, month: 5, day: 3), sales: 56),
+            (day: date(year: 2022, month: 5, day: 4), sales: 66),
+            (day: date(year: 2022, month: 5, day: 5), sales: 61),
+            (day: date(year: 2022, month: 5, day: 6), sales: 60),
+            (day: date(year: 2022, month: 5, day: 7), sales: 77),
+            (day: date(year: 2022, month: 5, day: 8), sales: 113)
         ])
     ]
 }
